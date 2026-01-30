@@ -1,759 +1,799 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, CheckCircle, RefreshCw, Home, ChevronRight, Award, Lightbulb, Heart, Play, AlertTriangle } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn tập Môi trường Đại cương</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel để biên dịch JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-bounceIn { animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col text-gray-800">
+    <div id="root"></div>
 
-// --- NGÂN HÀNG CÂU HỎI ĐẦY ĐỦ (Dữ liệu từ file MTDC_CHƯƠNG 1-KĐA.doc) ---
-const fullQuestionBank = [
-  // --- CHƯƠNG 1 ---
-  {
-    id: 101,
-    question: "Theo Luật BVMT 2020, Môi trường bao gồm các yếu tố vật chất ...?...",
-    options: ["(1) tự nhiên, (2) xã hội", "(1) tự nhiên, (2) nhân tạo", "(1) vật lý, (2) hóa học", "(1) hữu hình, (2) vô hình"],
-    answer: "(1) tự nhiên, (2) nhân tạo",
-    chapter: 1,
-    hint: "Bao gồm cả cây cối (tự nhiên) và nhà cửa, cầu đường (nhân tạo)."
-  },
-  {
-    id: 102,
-    question: "Các thành phần cơ bản của môi trường là gì?",
-    options: ["Khí quyển, thạch quyển, thuỷ quyển, sinh quyển", "Khí quyển, địa quyển, sinh quyển, vũ trụ", "Đất, nước, không khí, ánh sáng", "Tự nhiên, xã hội, nhân tạo"],
-    answer: "Khí quyển, thạch quyển, thuỷ quyển, sinh quyển",
-    chapter: 1,
-    hint: "4 quyển: Khí, Đất (Thạch), Nước (Thủy), Sự sống (Sinh)."
-  },
-  {
-    id: 103,
-    question: "Sắp xếp theo thứ tự giảm dần hàm lượng các khí chủ yếu có trong khí quyển:",
-    options: ["Oxy > Nitơ > Argon > CO2", "Nitơ > Oxy > Argon > Carbon Dioxide", "Argon > Nitơ > CO2 > Oxy", "Nitơ > Oxy > CO2 > Argon"],
-    answer: "Nitơ > Oxy > Argon > Carbon Dioxide",
-    chapter: 1,
-    hint: "Nitơ chiếm khoảng 78%, Oxy khoảng 21%."
-  },
-  {
-    id: 104,
-    question: "Tầng khí quyển nào tập trung hầu hết hơi nước và phát triển các hiện tượng thời tiết?",
-    options: ["Tầng bình lưu", "Tầng đối lưu", "Tầng trung lưu", "Tầng nhiệt"],
-    answer: "Tầng đối lưu",
-    chapter: 1,
-    hint: "Tầng thấp nhất, nơi chúng ta đang sống."
-  },
-  {
-    id: 105,
-    question: "Lớp ozone (bảo vệ con người khỏi tia cực tím) phân bố ở tầng nào?",
-    options: ["Tầng đối lưu", "Tầng bình lưu", "Tầng trung lưu", "Tầng ngoài"],
-    answer: "Tầng bình lưu",
-    chapter: 1,
-    hint: "Nằm ngay trên tầng đối lưu."
-  },
-  {
-    id: 106,
-    question: "Tầng khí quyển nào lạnh nhất (có thể xuống -120 độ C)?",
-    options: ["Tầng đối lưu", "Tầng bình lưu", "Tầng trung lưu", "Tầng nhiệt"],
-    answer: "Tầng trung lưu",
-    chapter: 1,
-    hint: "Nằm giữa tầng bình lưu và tầng nhiệt."
-  },
-  {
-    id: 107,
-    question: "Thạch quyển bao gồm:",
-    options: ["Vỏ Trái Đất và nhân Trái Đất", "Vỏ Trái Đất và lớp manti trên", "Lớp phủ và nhân", "Đất và đá"],
-    answer: "Vỏ Trái Đất và lớp manti trên",
-    chapter: 1,
-    hint: "Phần cứng ngoài cùng của Trái Đất."
-  },
-  {
-    id: 108,
-    question: "Sinh quyển bao gồm các cơ thể sống tồn tại trong các môi trường nào?",
-    options: ["Thạch quyển, Thủy quyển, Khí quyển", "Đất, Nước, Chân không", "Rừng, Biển, Đồng bằng", "Tự nhiên, Xã hội"],
-    answer: "Thạch quyển, Thủy quyển, Khí quyển",
-    chapter: 1,
-    hint: "Sự sống có mặt ở trong đất, trong nước và trong không khí."
-  },
-  {
-    id: 109,
-    question: "Chức năng nào của môi trường còn gọi là nhóm chức năng sản xuất tự nhiên?",
-    options: ["Không gian sống", "Nơi cung cấp tài nguyên", "Nơi chứa đựng chất thải", "Nơi lưu trữ thông tin"],
-    answer: "Nơi cung cấp tài nguyên",
-    chapter: 1,
-    hint: "Cung cấp rừng, khoáng sản, năng lượng..."
-  },
-  {
-    id: 110,
-    question: "Môi trường là nơi lưu trữ lịch sử địa chất, nguồn gen, văn hóa... minh họa cho chức năng nào?",
-    options: ["Nơi chứa đựng chất thải", "Nơi giảm nhẹ tác động thiên nhiên", "Nơi lưu trữ và cung cấp thông tin", "Không gian sống"],
-    answer: "Nơi lưu trữ và cung cấp thông tin",
-    chapter: 1,
-    hint: "Liên quan đến việc 'ghi nhớ' dữ liệu của Trái Đất."
-  },
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-  // --- CHƯƠNG 2 ---
-  {
-    id: 201,
-    question: "Theo quy mô/trữ lượng, tài nguyên được phân loại thành:",
-    options: ["Tài nguyên tái tạo và không tái tạo", "Tài nguyên vô hạn và hữu hạn", "Tài nguyên tự nhiên và xã hội", "Tài nguyên đất và nước"],
-    answer: "Tài nguyên vô hạn và hữu hạn",
-    chapter: 2,
-    hint: "Một loại dùng mãi không hết (nắng, gió), một loại có giới hạn."
-  },
-  {
-    id: 202,
-    question: "Tài nguyên nước là tài nguyên:",
-    options: ["Không tái tạo", "Tái tạo", "Vĩnh cửu", "Tất cả đều sai"],
-    answer: "Tái tạo",
-    chapter: 2,
-    hint: "Nước có vòng tuần hoàn tự nhiên."
-  },
-  {
-    id: 203,
-    question: "Công thức I = P.C.T (tác động môi trường) của Ehrlich và Holdren. P là gì?",
-    options: ["Dân số (Population)", "Ô nhiễm (Pollution)", "Sản xuất (Production)", "Tiêu dùng"],
-    answer: "Dân số (Population)",
-    chapter: 2,
-    hint: "Chữ P đầu tiên trong Population."
-  },
-  {
-    id: 204,
-    question: "Theo Luật Đất đai 2013, nhóm đất nông nghiệp bao gồm:",
-    options: ["Đất ở, đất xây dựng", "Đất trồng cây lâu năm, đất rừng sản xuất, đất nuôi trồng thủy sản", "Đất khu công nghiệp, đất làm muối", "Đất sông ngòi, kênh rạch"],
-    answer: "Đất trồng cây lâu năm, đất rừng sản xuất, đất nuôi trồng thủy sản",
-    chapter: 2,
-    hint: "Đất dùng để sản xuất lương thực, thực phẩm, trồng rừng."
-  },
-  {
-    id: 205,
-    question: "Nghị định thư Montreal (1987) liên quan đến vấn đề gì?",
-    options: ["Cắt giảm khí nhà kính", "Các chất làm suy giảm tầng ozone", "Bảo vệ động vật hoang dã", "Ô nhiễm biển"],
-    answer: "Các chất làm suy giảm tầng ozone",
-    chapter: 2,
-    hint: "Mục tiêu là loại bỏ CFCs."
-  },
-  {
-    id: 206,
-    question: "Công ước RAMSAR (1971) liên quan đến:",
-    options: ["Các vùng đất ngập nước", "Buôn bán động vật hoang dã", "Biến đổi khí hậu", "Chất thải nguy hại"],
-    answer: "Các vùng đất ngập nước",
-    chapter: 2,
-    hint: "Bảo vệ nơi cư trú của các loài chim nước."
-  },
-  {
-    id: 207,
-    question: "CITES là tên viết tắt của công ước về:",
-    options: ["Đa dạng sinh học", "Buôn bán quốc tế các loài động thực vật hoang dã nguy cấp", "Biến đổi khí hậu", "Chất thải rắn"],
-    answer: "Buôn bán quốc tế các loài động thực vật hoang dã nguy cấp",
-    chapter: 2,
-    hint: "Kiểm soát việc mua bán ngà voi, sừng tê giác..."
-  },
-  {
-    id: 208,
-    question: "Tài nguyên khoáng sản được chia thành 3 nhóm:",
-    options: ["Năng lượng, Phi kim loại, Kim loại", "Rắn, Lỏng, Khí", "Tái tạo, Không tái tạo, Vĩnh cửu", "Đất, Đá, Quặng"],
-    answer: "Năng lượng, Phi kim loại, Kim loại",
-    chapter: 2,
-    hint: "Than (năng lượng), Sắt (kim loại), Đá vôi (phi kim)."
-  },
-  {
-    id: 209,
-    question: "Dạng năng lượng nào sau đây là năng lượng tái tạo?",
-    options: ["Than đá", "Dầu mỏ", "Khí thiên nhiên", "Năng lượng gió, mặt trời"],
-    answer: "Năng lượng gió, mặt trời",
-    chapter: 2,
-    hint: "Năng lượng sạch, không cạn kiệt."
-  },
-  {
-    id: 210,
-    question: "Việt Nam có 3 loại rừng chính là:",
-    options: ["Rừng ngập mặn, rừng thưa, rừng kín", "Rừng đặc dụng, rừng phòng hộ, rừng sản xuất", "Rừng nguyên sinh, rừng thứ sinh, rừng trồng", "Rừng trên cạn, rừng dưới nước, rừng tre nứa"],
-    answer: "Rừng đặc dụng, rừng phòng hộ, rừng sản xuất",
-    chapter: 2,
-    hint: "Phân loại theo mục đích sử dụng trong Luật Lâm nghiệp."
-  },
+        // --- ICONS (SVG thay thế cho lucide-react để chạy không cần build) ---
+        const Icon = ({ path, className, size = 24, fill = "none", stroke = "currentColor" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
 
-  // --- CHƯƠNG 3 ---
-  {
-    id: 301,
-    question: "Ô nhiễm môi trường là sự biến đổi các thành phần môi trường...?",
-    options: ["Phù hợp với quy chuẩn kỹ thuật", "Không phù hợp (vượt quá) quy chuẩn kỹ thuật", "Do tự nhiên gây ra hoàn toàn", "Chỉ ảnh hưởng đến kinh tế"],
-    answer: "Không phù hợp (vượt quá) quy chuẩn kỹ thuật",
-    chapter: 3,
-    hint: "Khi nồng độ chất độc vượt mức cho phép."
-  },
-  {
-    id: 302,
-    question: "Chỉ số BOD (Nhu cầu oxy sinh hóa) dùng để đánh giá loại ô nhiễm nào?",
-    options: ["Ô nhiễm kim loại nặng", "Ô nhiễm hữu cơ", "Ô nhiễm phóng xạ", "Ô nhiễm nhiệt"],
-    answer: "Ô nhiễm hữu cơ",
-    chapter: 3,
-    hint: "Vi sinh vật cần Oxy để phân hủy chất hữu cơ."
-  },
-  {
-    id: 303,
-    question: "Nguồn gốc phát sinh ô nhiễm không khí nhân tạo chủ yếu từ:",
-    options: ["Núi lửa phun trào", "Sản xuất công nghiệp và Giao thông vận tải", "Phân hủy xác động vật", "Bão bụi"],
-    answer: "Sản xuất công nghiệp và Giao thông vận tải",
-    chapter: 3,
-    hint: "Khói từ nhà máy và xe cộ."
-  },
-  {
-    id: 304,
-    question: "Hiện tượng phú dưỡng trong nước thường do dư thừa chất gì?",
-    options: ["Kim loại nặng (Hg, Pb)", "Dầu mỡ", "Chất dinh dưỡng (N, P)", "Vi sinh vật"],
-    answer: "Chất dinh dưỡng (N, P)",
-    chapter: 3,
-    hint: "Thừa đạm (Nitơ) và Lân (Photpho) làm tảo nở hoa."
-  },
-  {
-    id: 305,
-    question: "Biểu hiện nguy hiểm nhất của suy thoái đất là:",
-    options: ["Nhiễm phèn", "Sa mạc hóa", "Ngập úng", "Nhiễm mặn"],
-    answer: "Sa mạc hóa",
-    chapter: 3,
-    hint: "Đất đai khô cằn vĩnh viễn, không thể canh tác."
-  },
-  {
-    id: 306,
-    question: "Theo Luật BVMT 2020, có bao nhiêu nhóm hành vi bị nghiêm cấm?",
-    options: ["7 nhóm", "10 nhóm", "12 nhóm", "14 nhóm"],
-    answer: "14 nhóm",
-    chapter: 3,
-    hint: "Con số lớn nhất trong các đáp án."
-  },
-  {
-    id: 307,
-    question: "E.coli và Coliform là thông số đánh giá ô nhiễm dạng nào?",
-    options: ["Ô nhiễm hóa học", "Ô nhiễm vật lý", "Ô nhiễm vi sinh", "Ô nhiễm phóng xạ"],
-    answer: "Ô nhiễm vi sinh",
-    chapter: 3,
-    hint: "Đây là tên các loại vi khuẩn gây bệnh đường ruột."
-  },
-  {
-    id: 308,
-    question: "Khí nào là nguyên nhân chính gây ra mưa axit?",
-    options: ["CO và CO2", "SO2 và NOx", "CH4 và CFC", "O3 và Pb"],
-    answer: "SO2 và NOx",
-    chapter: 3,
-    hint: "Tạo thành Axit Sulfuric và Axit Nitric khi gặp nước."
-  },
-  {
-    id: 309,
-    question: "Nguyên nhân gây ô nhiễm đất do hoạt động nông nghiệp chủ yếu là:",
-    options: ["Sử dụng phân bón hóa học và thuốc BVTV quá mức", "Chất thải công nghiệp", "Rác thải sinh hoạt", "Khí thải xe cộ"],
-    answer: "Sử dụng phân bón hóa học và thuốc BVTV quá mức",
-    chapter: 3,
-    hint: "Hóa chất do người nông dân sử dụng."
-  },
-  {
-    id: 310,
-    question: "Công thức hóa học của 'Sát thủ vô hình' gây ngạt khí là:",
-    options: ["CO2", "CO", "SO2", "NO2"],
-    answer: "CO",
-    chapter: 3,
-    hint: "Carbon Monoxide, không màu, không mùi, rất độc."
-  },
+        const BookOpen = (p) => <Icon {...p} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>} />;
+        const CheckCircle = (p) => <Icon {...p} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} />;
+        const RefreshCw = (p) => <Icon {...p} path={<><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>} />;
+        const Home = (p) => <Icon {...p} path={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>} />;
+        const ChevronRight = (p) => <Icon {...p} path={<polyline points="9 18 15 12 9 6"/>} />;
+        const Award = (p) => <Icon {...p} path={<><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></>} />;
+        const Lightbulb = (p) => <Icon {...p} path={<><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>} />;
+        const Heart = (p) => <Icon {...p} path={<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>} />;
+        const Play = (p) => <Icon {...p} fill="currentColor" stroke="none" path={<polygon points="5 3 19 12 5 21 5 3"/>} />;
+        const AlertTriangle = (p) => <Icon {...p} path={<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>} />;
 
-  // --- CHƯƠNG 4 ---
-  {
-    id: 401,
-    question: "IPCC là tên viết tắt của tổ chức nào?",
-    options: ["Tổ chức Y tế Thế giới", "Ủy ban Liên chính phủ về Biến đổi khí hậu", "Tổ chức Thương mại Thế giới", "Chương trình Môi trường LHQ"],
-    answer: "Ủy ban Liên chính phủ về Biến đổi khí hậu",
-    chapter: 4,
-    hint: "Panel on Climate Change."
-  },
-  {
-    id: 402,
-    question: "Biểu hiện chính của biến đổi khí hậu toàn cầu là:",
-    options: ["Động đất, sóng thần", "Nhiệt độ tăng, mực nước biển dâng, thay đổi lượng mưa", "Ô nhiễm không khí tăng", "Suy giảm tầng ozone"],
-    answer: "Nhiệt độ tăng, mực nước biển dâng, thay đổi lượng mưa",
-    chapter: 4,
-    hint: "Trái đất nóng lên làm băng tan."
-  },
-  {
-    id: 403,
-    question: "Khí nhà kính (KNK) nào đóng góp lớn nhất vào hiệu ứng nhà kính nhân tạo?",
-    options: ["CH4 (Metan)", "CO2 (Carbon dioxide)", "N2O (Nitrous oxide)", "CFCs"],
-    answer: "CO2 (Carbon dioxide)",
-    chapter: 4,
-    hint: "Sinh ra từ việc đốt than, xăng dầu."
-  },
-  {
-    id: 404,
-    question: "Hai chiến lược chính để ứng phó với BĐKH là:",
-    options: ["Phòng ngừa và Xử lý", "Thích ứng và Giảm nhẹ", "Chống đối và Chấp nhận", "Tái tạo và Bảo tồn"],
-    answer: "Thích ứng và Giảm nhẹ",
-    chapter: 4,
-    hint: "Thích ứng để sống chung, Giảm nhẹ để ngăn chặn nguyên nhân."
-  },
-  {
-    id: 405,
-    question: "Tại Việt Nam, hai khu vực bị ảnh hưởng nặng nhất bởi nước biển dâng là:",
-    options: ["Tây Bắc và Tây Nguyên", "Đồng bằng sông Hồng và Đồng bằng sông Cửu Long", "Bắc Trung Bộ và Nam Trung Bộ", "Hà Nội và TP.HCM"],
-    answer: "Đồng bằng sông Hồng và Đồng bằng sông Cửu Long",
-    chapter: 4,
-    hint: "Hai vựa lúa lớn, địa hình thấp trũng."
-  },
-  {
-    id: 406,
-    question: "Hoạt động 'Giảm nhẹ' BĐKH nhắm tới mục tiêu gì?",
-    options: ["Giảm thiệt hại do thiên tai", "Giảm phát thải khí nhà kính và tăng bể hấp thụ", "Di dời dân cư", "Xây đê biển"],
-    answer: "Giảm phát thải khí nhà kính và tăng bể hấp thụ",
-    chapter: 4,
-    hint: "Giải quyết nguyên nhân gốc rễ (khí thải)."
-  },
-  {
-    id: 407,
-    question: "Khí CH4 (Metan) phát sinh chủ yếu từ hoạt động nào?",
-    options: ["Giao thông vận tải", "Canh tác lúa nước, chăn nuôi, bãi rác", "Sản xuất xi măng", "Đốt than đá"],
-    answer: "Canh tác lúa nước, chăn nuôi, bãi rác",
-    chapter: 4,
-    hint: "Phân hủy yếm khí trong ruộng ngập nước và dạ dày trâu bò."
-  },
-  {
-    id: 408,
-    question: "Kịch bản BĐKH trung bình cho Việt Nam dựa trên nồng độ KNK nào?",
-    options: ["RCP 2.6", "RCP 4.5 và RCP 6.0", "RCP 8.5", "RCP 10.0"],
-    answer: "RCP 4.5 và RCP 6.0",
-    chapter: 4,
-    hint: "Mức giữa (thấp là 2.6, cao là 8.5)."
-  },
+        // --- DỮ LIỆU CÂU HỎI ---
+        const fullQuestionBank = [
+          // --- CHƯƠNG 1 ---
+          {
+            id: 101,
+            question: "Theo Luật BVMT 2020, Môi trường bao gồm các yếu tố vật chất ...?...",
+            options: ["(1) tự nhiên, (2) xã hội", "(1) tự nhiên, (2) nhân tạo", "(1) vật lý, (2) hóa học", "(1) hữu hình, (2) vô hình"],
+            answer: "(1) tự nhiên, (2) nhân tạo",
+            chapter: 1,
+            hint: "Bao gồm cả cây cối (tự nhiên) và nhà cửa, cầu đường (nhân tạo)."
+          },
+          {
+            id: 102,
+            question: "Các thành phần cơ bản của môi trường là gì?",
+            options: ["Khí quyển, thạch quyển, thuỷ quyển, sinh quyển", "Khí quyển, địa quyển, sinh quyển, vũ trụ", "Đất, nước, không khí, ánh sáng", "Tự nhiên, xã hội, nhân tạo"],
+            answer: "Khí quyển, thạch quyển, thuỷ quyển, sinh quyển",
+            chapter: 1,
+            hint: "4 quyển: Khí, Đất (Thạch), Nước (Thủy), Sự sống (Sinh)."
+          },
+          {
+            id: 103,
+            question: "Sắp xếp theo thứ tự giảm dần hàm lượng các khí chủ yếu có trong khí quyển:",
+            options: ["Oxy > Nitơ > Argon > CO2", "Nitơ > Oxy > Argon > Carbon Dioxide", "Argon > Nitơ > CO2 > Oxy", "Nitơ > Oxy > CO2 > Argon"],
+            answer: "Nitơ > Oxy > Argon > Carbon Dioxide",
+            chapter: 1,
+            hint: "Nitơ chiếm khoảng 78%, Oxy khoảng 21%."
+          },
+          {
+            id: 104,
+            question: "Tầng khí quyển nào tập trung hầu hết hơi nước và phát triển các hiện tượng thời tiết?",
+            options: ["Tầng bình lưu", "Tầng đối lưu", "Tầng trung lưu", "Tầng nhiệt"],
+            answer: "Tầng đối lưu",
+            chapter: 1,
+            hint: "Tầng thấp nhất, nơi chúng ta đang sống."
+          },
+          {
+            id: 105,
+            question: "Lớp ozone (bảo vệ con người khỏi tia cực tím) phân bố ở tầng nào?",
+            options: ["Tầng đối lưu", "Tầng bình lưu", "Tầng trung lưu", "Tầng ngoài"],
+            answer: "Tầng bình lưu",
+            chapter: 1,
+            hint: "Nằm ngay trên tầng đối lưu."
+          },
+          {
+            id: 106,
+            question: "Tầng khí quyển nào lạnh nhất (có thể xuống -120 độ C)?",
+            options: ["Tầng đối lưu", "Tầng bình lưu", "Tầng trung lưu", "Tầng nhiệt"],
+            answer: "Tầng trung lưu",
+            chapter: 1,
+            hint: "Nằm giữa tầng bình lưu và tầng nhiệt."
+          },
+          {
+            id: 107,
+            question: "Thạch quyển bao gồm:",
+            options: ["Vỏ Trái Đất và nhân Trái Đất", "Vỏ Trái Đất và lớp manti trên", "Lớp phủ và nhân", "Đất và đá"],
+            answer: "Vỏ Trái Đất và lớp manti trên",
+            chapter: 1,
+            hint: "Phần cứng ngoài cùng của Trái Đất."
+          },
+          {
+            id: 108,
+            question: "Sinh quyển bao gồm các cơ thể sống tồn tại trong các môi trường nào?",
+            options: ["Thạch quyển, Thủy quyển, Khí quyển", "Đất, Nước, Chân không", "Rừng, Biển, Đồng bằng", "Tự nhiên, Xã hội"],
+            answer: "Thạch quyển, Thủy quyển, Khí quyển",
+            chapter: 1,
+            hint: "Sự sống có mặt ở trong đất, trong nước và trong không khí."
+          },
+          {
+            id: 109,
+            question: "Chức năng nào của môi trường còn gọi là nhóm chức năng sản xuất tự nhiên?",
+            options: ["Không gian sống", "Nơi cung cấp tài nguyên", "Nơi chứa đựng chất thải", "Nơi lưu trữ thông tin"],
+            answer: "Nơi cung cấp tài nguyên",
+            chapter: 1,
+            hint: "Cung cấp rừng, khoáng sản, năng lượng..."
+          },
+          {
+            id: 110,
+            question: "Môi trường là nơi lưu trữ lịch sử địa chất, nguồn gen, văn hóa... minh họa cho chức năng nào?",
+            options: ["Nơi chứa đựng chất thải", "Nơi giảm nhẹ tác động thiên nhiên", "Nơi lưu trữ và cung cấp thông tin", "Không gian sống"],
+            answer: "Nơi lưu trữ và cung cấp thông tin",
+            chapter: 1,
+            hint: "Liên quan đến việc 'ghi nhớ' dữ liệu của Trái Đất."
+          },
+          // --- CHƯƠNG 2 ---
+          {
+            id: 201,
+            question: "Theo quy mô/trữ lượng, tài nguyên được phân loại thành:",
+            options: ["Tài nguyên tái tạo và không tái tạo", "Tài nguyên vô hạn và hữu hạn", "Tài nguyên tự nhiên và xã hội", "Tài nguyên đất và nước"],
+            answer: "Tài nguyên vô hạn và hữu hạn",
+            chapter: 2,
+            hint: "Một loại dùng mãi không hết (nắng, gió), một loại có giới hạn."
+          },
+          {
+            id: 202,
+            question: "Tài nguyên nước là tài nguyên:",
+            options: ["Không tái tạo", "Tái tạo", "Vĩnh cửu", "Tất cả đều sai"],
+            answer: "Tái tạo",
+            chapter: 2,
+            hint: "Nước có vòng tuần hoàn tự nhiên."
+          },
+          {
+            id: 203,
+            question: "Công thức I = P.C.T (tác động môi trường) của Ehrlich và Holdren. P là gì?",
+            options: ["Dân số (Population)", "Ô nhiễm (Pollution)", "Sản xuất (Production)", "Tiêu dùng"],
+            answer: "Dân số (Population)",
+            chapter: 2,
+            hint: "Chữ P đầu tiên trong Population."
+          },
+          {
+            id: 204,
+            question: "Theo Luật Đất đai 2013, nhóm đất nông nghiệp bao gồm:",
+            options: ["Đất ở, đất xây dựng", "Đất trồng cây lâu năm, đất rừng sản xuất, đất nuôi trồng thủy sản", "Đất khu công nghiệp, đất làm muối", "Đất sông ngòi, kênh rạch"],
+            answer: "Đất trồng cây lâu năm, đất rừng sản xuất, đất nuôi trồng thủy sản",
+            chapter: 2,
+            hint: "Đất dùng để sản xuất lương thực, thực phẩm, trồng rừng."
+          },
+          {
+            id: 205,
+            question: "Nghị định thư Montreal (1987) liên quan đến vấn đề gì?",
+            options: ["Cắt giảm khí nhà kính", "Các chất làm suy giảm tầng ozone", "Bảo vệ động vật hoang dã", "Ô nhiễm biển"],
+            answer: "Các chất làm suy giảm tầng ozone",
+            chapter: 2,
+            hint: "Mục tiêu là loại bỏ CFCs."
+          },
+          {
+            id: 206,
+            question: "Công ước RAMSAR (1971) liên quan đến:",
+            options: ["Các vùng đất ngập nước", "Buôn bán động vật hoang dã", "Biến đổi khí hậu", "Chất thải nguy hại"],
+            answer: "Các vùng đất ngập nước",
+            chapter: 2,
+            hint: "Bảo vệ nơi cư trú của các loài chim nước."
+          },
+          {
+            id: 207,
+            question: "CITES là tên viết tắt của công ước về:",
+            options: ["Đa dạng sinh học", "Buôn bán quốc tế các loài động thực vật hoang dã nguy cấp", "Biến đổi khí hậu", "Chất thải rắn"],
+            answer: "Buôn bán quốc tế các loài động thực vật hoang dã nguy cấp",
+            chapter: 2,
+            hint: "Kiểm soát việc mua bán ngà voi, sừng tê giác..."
+          },
+          {
+            id: 208,
+            question: "Tài nguyên khoáng sản được chia thành 3 nhóm:",
+            options: ["Năng lượng, Phi kim loại, Kim loại", "Rắn, Lỏng, Khí", "Tái tạo, Không tái tạo, Vĩnh cửu", "Đất, Đá, Quặng"],
+            answer: "Năng lượng, Phi kim loại, Kim loại",
+            chapter: 2,
+            hint: "Than (năng lượng), Sắt (kim loại), Đá vôi (phi kim)."
+          },
+          {
+            id: 209,
+            question: "Dạng năng lượng nào sau đây là năng lượng tái tạo?",
+            options: ["Than đá", "Dầu mỏ", "Khí thiên nhiên", "Năng lượng gió, mặt trời"],
+            answer: "Năng lượng gió, mặt trời",
+            chapter: 2,
+            hint: "Năng lượng sạch, không cạn kiệt."
+          },
+          {
+            id: 210,
+            question: "Việt Nam có 3 loại rừng chính là:",
+            options: ["Rừng ngập mặn, rừng thưa, rừng kín", "Rừng đặc dụng, rừng phòng hộ, rừng sản xuất", "Rừng nguyên sinh, rừng thứ sinh, rừng trồng", "Rừng trên cạn, rừng dưới nước, rừng tre nứa"],
+            answer: "Rừng đặc dụng, rừng phòng hộ, rừng sản xuất",
+            chapter: 2,
+            hint: "Phân loại theo mục đích sử dụng trong Luật Lâm nghiệp."
+          },
+          // --- CHƯƠNG 3 ---
+          {
+            id: 301,
+            question: "Ô nhiễm môi trường là sự biến đổi các thành phần môi trường...?",
+            options: ["Phù hợp với quy chuẩn kỹ thuật", "Không phù hợp (vượt quá) quy chuẩn kỹ thuật", "Do tự nhiên gây ra hoàn toàn", "Chỉ ảnh hưởng đến kinh tế"],
+            answer: "Không phù hợp (vượt quá) quy chuẩn kỹ thuật",
+            chapter: 3,
+            hint: "Khi nồng độ chất độc vượt mức cho phép."
+          },
+          {
+            id: 302,
+            question: "Chỉ số BOD (Nhu cầu oxy sinh hóa) dùng để đánh giá loại ô nhiễm nào?",
+            options: ["Ô nhiễm kim loại nặng", "Ô nhiễm hữu cơ", "Ô nhiễm phóng xạ", "Ô nhiễm nhiệt"],
+            answer: "Ô nhiễm hữu cơ",
+            chapter: 3,
+            hint: "Vi sinh vật cần Oxy để phân hủy chất hữu cơ."
+          },
+          {
+            id: 303,
+            question: "Nguồn gốc phát sinh ô nhiễm không khí nhân tạo chủ yếu từ:",
+            options: ["Núi lửa phun trào", "Sản xuất công nghiệp và Giao thông vận tải", "Phân hủy xác động vật", "Bão bụi"],
+            answer: "Sản xuất công nghiệp và Giao thông vận tải",
+            chapter: 3,
+            hint: "Khói từ nhà máy và xe cộ."
+          },
+          {
+            id: 304,
+            question: "Hiện tượng phú dưỡng trong nước thường do dư thừa chất gì?",
+            options: ["Kim loại nặng (Hg, Pb)", "Dầu mỡ", "Chất dinh dưỡng (N, P)", "Vi sinh vật"],
+            answer: "Chất dinh dưỡng (N, P)",
+            chapter: 3,
+            hint: "Thừa đạm (Nitơ) và Lân (Photpho) làm tảo nở hoa."
+          },
+          {
+            id: 305,
+            question: "Biểu hiện nguy hiểm nhất của suy thoái đất là:",
+            options: ["Nhiễm phèn", "Sa mạc hóa", "Ngập úng", "Nhiễm mặn"],
+            answer: "Sa mạc hóa",
+            chapter: 3,
+            hint: "Đất đai khô cằn vĩnh viễn, không thể canh tác."
+          },
+          {
+            id: 306,
+            question: "Theo Luật BVMT 2020, có bao nhiêu nhóm hành vi bị nghiêm cấm?",
+            options: ["7 nhóm", "10 nhóm", "12 nhóm", "14 nhóm"],
+            answer: "14 nhóm",
+            chapter: 3,
+            hint: "Con số lớn nhất trong các đáp án."
+          },
+          {
+            id: 307,
+            question: "E.coli và Coliform là thông số đánh giá ô nhiễm dạng nào?",
+            options: ["Ô nhiễm hóa học", "Ô nhiễm vật lý", "Ô nhiễm vi sinh", "Ô nhiễm phóng xạ"],
+            answer: "Ô nhiễm vi sinh",
+            chapter: 3,
+            hint: "Đây là tên các loại vi khuẩn gây bệnh đường ruột."
+          },
+          {
+            id: 308,
+            question: "Khí nào là nguyên nhân chính gây ra mưa axit?",
+            options: ["CO và CO2", "SO2 và NOx", "CH4 và CFC", "O3 và Pb"],
+            answer: "SO2 và NOx",
+            chapter: 3,
+            hint: "Tạo thành Axit Sulfuric và Axit Nitric khi gặp nước."
+          },
+          {
+            id: 309,
+            question: "Nguyên nhân gây ô nhiễm đất do hoạt động nông nghiệp chủ yếu là:",
+            options: ["Sử dụng phân bón hóa học và thuốc BVTV quá mức", "Chất thải công nghiệp", "Rác thải sinh hoạt", "Khí thải xe cộ"],
+            answer: "Sử dụng phân bón hóa học và thuốc BVTV quá mức",
+            chapter: 3,
+            hint: "Hóa chất do người nông dân sử dụng."
+          },
+          {
+            id: 310,
+            question: "Công thức hóa học của 'Sát thủ vô hình' gây ngạt khí là:",
+            options: ["CO2", "CO", "SO2", "NO2"],
+            answer: "CO",
+            chapter: 3,
+            hint: "Carbon Monoxide, không màu, không mùi, rất độc."
+          },
+          // --- CHƯƠNG 4 ---
+          {
+            id: 401,
+            question: "IPCC là tên viết tắt của tổ chức nào?",
+            options: ["Tổ chức Y tế Thế giới", "Ủy ban Liên chính phủ về Biến đổi khí hậu", "Tổ chức Thương mại Thế giới", "Chương trình Môi trường LHQ"],
+            answer: "Ủy ban Liên chính phủ về Biến đổi khí hậu",
+            chapter: 4,
+            hint: "Panel on Climate Change."
+          },
+          {
+            id: 402,
+            question: "Biểu hiện chính của biến đổi khí hậu toàn cầu là:",
+            options: ["Động đất, sóng thần", "Nhiệt độ tăng, mực nước biển dâng, thay đổi lượng mưa", "Ô nhiễm không khí tăng", "Suy giảm tầng ozone"],
+            answer: "Nhiệt độ tăng, mực nước biển dâng, thay đổi lượng mưa",
+            chapter: 4,
+            hint: "Trái đất nóng lên làm băng tan."
+          },
+          {
+            id: 403,
+            question: "Khí nhà kính (KNK) nào đóng góp lớn nhất vào hiệu ứng nhà kính nhân tạo?",
+            options: ["CH4 (Metan)", "CO2 (Carbon dioxide)", "N2O (Nitrous oxide)", "CFCs"],
+            answer: "CO2 (Carbon dioxide)",
+            chapter: 4,
+            hint: "Sinh ra từ việc đốt than, xăng dầu."
+          },
+          {
+            id: 404,
+            question: "Hai chiến lược chính để ứng phó với BĐKH là:",
+            options: ["Phòng ngừa và Xử lý", "Thích ứng và Giảm nhẹ", "Chống đối và Chấp nhận", "Tái tạo và Bảo tồn"],
+            answer: "Thích ứng và Giảm nhẹ",
+            chapter: 4,
+            hint: "Thích ứng để sống chung, Giảm nhẹ để ngăn chặn nguyên nhân."
+          },
+          {
+            id: 405,
+            question: "Tại Việt Nam, hai khu vực bị ảnh hưởng nặng nhất bởi nước biển dâng là:",
+            options: ["Tây Bắc và Tây Nguyên", "Đồng bằng sông Hồng và Đồng bằng sông Cửu Long", "Bắc Trung Bộ và Nam Trung Bộ", "Hà Nội và TP.HCM"],
+            answer: "Đồng bằng sông Hồng và Đồng bằng sông Cửu Long",
+            chapter: 4,
+            hint: "Hai vựa lúa lớn, địa hình thấp trũng."
+          },
+          {
+            id: 406,
+            question: "Hoạt động 'Giảm nhẹ' BĐKH nhắm tới mục tiêu gì?",
+            options: ["Giảm thiệt hại do thiên tai", "Giảm phát thải khí nhà kính và tăng bể hấp thụ", "Di dời dân cư", "Xây đê biển"],
+            answer: "Giảm phát thải khí nhà kính và tăng bể hấp thụ",
+            chapter: 4,
+            hint: "Giải quyết nguyên nhân gốc rễ (khí thải)."
+          },
+          {
+            id: 407,
+            question: "Khí CH4 (Metan) phát sinh chủ yếu từ hoạt động nào?",
+            options: ["Giao thông vận tải", "Canh tác lúa nước, chăn nuôi, bãi rác", "Sản xuất xi măng", "Đốt than đá"],
+            answer: "Canh tác lúa nước, chăn nuôi, bãi rác",
+            chapter: 4,
+            hint: "Phân hủy yếm khí trong ruộng ngập nước và dạ dày trâu bò."
+          },
+          {
+            id: 408,
+            question: "Kịch bản BĐKH trung bình cho Việt Nam dựa trên nồng độ KNK nào?",
+            options: ["RCP 2.6", "RCP 4.5 và RCP 6.0", "RCP 8.5", "RCP 10.0"],
+            answer: "RCP 4.5 và RCP 6.0",
+            chapter: 4,
+            hint: "Mức giữa (thấp là 2.6, cao là 8.5)."
+          },
+          // --- CHƯƠNG 5 & 6 ---
+          {
+            id: 501,
+            question: "Khái niệm Phát triển bền vững (PTBV) xuất hiện nổi bật nhất trong báo cáo nào?",
+            options: ["Tương lai của chúng ta (Brundtland, 1987)", "Chiến lược bảo tồn thế giới", "Chương trình nghị sự 21", "Công ước Rio"],
+            answer: "Tương lai của chúng ta (Brundtland, 1987)",
+            chapter: 5,
+            hint: "Báo cáo nổi tiếng của bà Brundtland."
+          },
+          {
+            id: 502,
+            question: "Ba trụ cột của phát triển bền vững là:",
+            options: ["Kinh tế, Chính trị, Văn hóa", "Kinh tế, Xã hội, Môi trường", "Tự nhiên, Con người, Xã hội", "Khoa học, Công nghệ, Môi trường"],
+            answer: "Kinh tế, Xã hội, Môi trường",
+            chapter: 5,
+            hint: "Tam giác bền vững."
+          },
+          {
+            id: 503,
+            question: "Có bao nhiêu Mục tiêu Phát triển Bền vững (SDGs) của LHQ đến năm 2030?",
+            options: ["10 mục tiêu", "15 mục tiêu", "17 mục tiêu", "20 mục tiêu"],
+            answer: "17 mục tiêu",
+            chapter: 5,
+            hint: "17 mục tiêu và 169 chỉ tiêu."
+          },
+          {
+            id: 601,
+            question: "Nguyên tắc 'Người gây ô nhiễm phải trả tiền' (PPP) nghĩa là:",
+            options: ["Người gây ô nhiễm bị đi tù", "Người gây ô nhiễm phải chịu chi phí cho các biện pháp khắc phục và xử lý", "Nhà nước trả tiền xử lý ô nhiễm", "Cộng đồng quyên góp tiền xử lý"],
+            answer: "Người gây ô nhiễm phải chịu chi phí cho các biện pháp khắc phục và xử lý",
+            chapter: 6,
+            hint: "Ai làm bẩn thì người đó phải trả tiền dọn dẹp."
+          },
+          {
+            id: 602,
+            question: "ISO 14000 là bộ tiêu chuẩn quốc tế về:",
+            options: ["Quản lý chất lượng", "Quản lý môi trường", "An toàn thực phẩm", "An toàn lao động"],
+            answer: "Quản lý môi trường",
+            chapter: 6,
+            hint: "Dành riêng cho Môi trường (Environment)."
+          },
+          {
+            id: 603,
+            question: "Công cụ kinh tế trong quản lý môi trường bao gồm:",
+            options: ["Luật, Nghị định", "Thuế, phí môi trường, giấy phép xả thải chuyển nhượng", "Quan trắc môi trường", "Giáo dục truyền thông"],
+            answer: "Thuế, phí môi trường, giấy phép xả thải chuyển nhượng",
+            chapter: 6,
+            hint: "Liên quan đến tài chính, tiền tệ."
+          },
+          {
+            id: 604,
+            question: "ĐTM (Đánh giá tác động môi trường) thường được thực hiện khi nào?",
+            options: ["Sau khi dự án hoạt động", "Trước khi phê duyệt dự án", "Khi có sự cố", "Khi dự án giải thể"],
+            answer: "Trước khi phê duyệt dự án",
+            chapter: 6,
+            hint: "Mang tính phòng ngừa, phải làm trước."
+          },
+          {
+            id: 605,
+            question: "Quản lý môi trường cần tuân thủ nguyên tắc nào?",
+            options: ["Quản lý theo sự vụ", "Quản lý tổng hợp và thống nhất", "Ưu tiên xử lý sau khi ô nhiễm", "Kinh tế trước, môi trường sau"],
+            answer: "Quản lý tổng hợp và thống nhất",
+            chapter: 6,
+            hint: "Không quản lý rời rạc, cắt khúc."
+          },
+          {
+            id: 606,
+            question: "Công ước Basel (1989) kiểm soát vấn đề gì?",
+            options: ["Vận chuyển chất thải nguy hại qua biên giới", "Bảo vệ tầng Ozone", "Biến đổi khí hậu", "Buôn bán động vật hoang dã"],
+            answer: "Vận chuyển chất thải nguy hại qua biên giới",
+            chapter: 6,
+            hint: "Ngăn chặn các nước giàu đổ rác độc hại sang nước nghèo."
+          }
+        ];
 
-  // --- CHƯƠNG 5 & 6 ---
-  {
-    id: 501,
-    question: "Khái niệm Phát triển bền vững (PTBV) xuất hiện nổi bật nhất trong báo cáo nào?",
-    options: ["Tương lai của chúng ta (Brundtland, 1987)", "Chiến lược bảo tồn thế giới", "Chương trình nghị sự 21", "Công ước Rio"],
-    answer: "Tương lai của chúng ta (Brundtland, 1987)",
-    chapter: 5,
-    hint: "Báo cáo nổi tiếng của bà Brundtland."
-  },
-  {
-    id: 502,
-    question: "Ba trụ cột của phát triển bền vững là:",
-    options: ["Kinh tế, Chính trị, Văn hóa", "Kinh tế, Xã hội, Môi trường", "Tự nhiên, Con người, Xã hội", "Khoa học, Công nghệ, Môi trường"],
-    answer: "Kinh tế, Xã hội, Môi trường",
-    chapter: 5,
-    hint: "Tam giác bền vững."
-  },
-  {
-    id: 503,
-    question: "Có bao nhiêu Mục tiêu Phát triển Bền vững (SDGs) của LHQ đến năm 2030?",
-    options: ["10 mục tiêu", "15 mục tiêu", "17 mục tiêu", "20 mục tiêu"],
-    answer: "17 mục tiêu",
-    chapter: 5,
-    hint: "17 mục tiêu và 169 chỉ tiêu."
-  },
-  {
-    id: 601,
-    question: "Nguyên tắc 'Người gây ô nhiễm phải trả tiền' (PPP) nghĩa là:",
-    options: ["Người gây ô nhiễm bị đi tù", "Người gây ô nhiễm phải chịu chi phí cho các biện pháp khắc phục và xử lý", "Nhà nước trả tiền xử lý ô nhiễm", "Cộng đồng quyên góp tiền xử lý"],
-    answer: "Người gây ô nhiễm phải chịu chi phí cho các biện pháp khắc phục và xử lý",
-    chapter: 6,
-    hint: "Ai làm bẩn thì người đó phải trả tiền dọn dẹp."
-  },
-  {
-    id: 602,
-    question: "ISO 14000 là bộ tiêu chuẩn quốc tế về:",
-    options: ["Quản lý chất lượng", "Quản lý môi trường", "An toàn thực phẩm", "An toàn lao động"],
-    answer: "Quản lý môi trường",
-    chapter: 6,
-    hint: "Dành riêng cho Môi trường (Environment)."
-  },
-  {
-    id: 603,
-    question: "Công cụ kinh tế trong quản lý môi trường bao gồm:",
-    options: ["Luật, Nghị định", "Thuế, phí môi trường, giấy phép xả thải chuyển nhượng", "Quan trắc môi trường", "Giáo dục truyền thông"],
-    answer: "Thuế, phí môi trường, giấy phép xả thải chuyển nhượng",
-    chapter: 6,
-    hint: "Liên quan đến tài chính, tiền tệ."
-  },
-  {
-    id: 604,
-    question: "ĐTM (Đánh giá tác động môi trường) thường được thực hiện khi nào?",
-    options: ["Sau khi dự án hoạt động", "Trước khi phê duyệt dự án", "Khi có sự cố", "Khi dự án giải thể"],
-    answer: "Trước khi phê duyệt dự án",
-    chapter: 6,
-    hint: "Mang tính phòng ngừa, phải làm trước."
-  },
-  {
-    id: 605,
-    question: "Quản lý môi trường cần tuân thủ nguyên tắc nào?",
-    options: ["Quản lý theo sự vụ", "Quản lý tổng hợp và thống nhất", "Ưu tiên xử lý sau khi ô nhiễm", "Kinh tế trước, môi trường sau"],
-    answer: "Quản lý tổng hợp và thống nhất",
-    chapter: 6,
-    hint: "Không quản lý rời rạc, cắt khúc."
-  },
-  {
-    id: 606,
-    question: "Công ước Basel (1989) kiểm soát vấn đề gì?",
-    options: ["Vận chuyển chất thải nguy hại qua biên giới", "Bảo vệ tầng Ozone", "Biến đổi khí hậu", "Buôn bán động vật hoang dã"],
-    answer: "Vận chuyển chất thải nguy hại qua biên giới",
-    chapter: 6,
-    hint: "Ngăn chặn các nước giàu đổ rác độc hại sang nước nghèo."
-  }
-];
+        // --- COMPONENTS ---
 
-// --- LOGIC TRỘN MẢNG ---
-const shuffleArray = (array) => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
+        const shuffleArray = (array) => {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        };
 
-// --- COMPONENTS ---
-
-const Header = ({ setView }) => (
-  <header className="bg-gradient-to-r from-teal-700 to-emerald-600 text-white p-4 shadow-lg sticky top-0 z-50">
-    <div className="container mx-auto flex justify-between items-center">
-      <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-        <BookOpen size={28} />
-        Ôn tập MTĐC
-      </h1>
-      <nav className="flex gap-4">
-        <button onClick={() => setView('home')} className="hover:bg-white/20 px-3 py-1 rounded-full transition-all text-sm font-semibold">Trang chủ</button>
-      </nav>
-    </div>
-  </header>
-);
-
-const HomeView = ({ startQuiz }) => (
-  <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-    <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-lg w-full border border-teal-50 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
-      
-      <h2 className="text-3xl font-extrabold text-teal-800 mb-4">Trắc Nghiệm Môi Trường</h2>
-      <p className="text-gray-600 mb-10 text-lg">
-        Hệ thống ôn tập kiến thức từ Chương 1 đến Chương 6. <br/>
-        Sẵn sàng thử thách bản thân chưa?
-      </p>
-      
-      <div className="flex justify-center">
-        <button 
-          onClick={() => startQuiz(30)}
-          className="group relative w-full py-5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ring-4 ring-transparent hover:ring-teal-200"
-        >
-          <div className="flex items-center justify-center gap-3">
-             <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
-                <Play size={32} fill="currentColor" />
-             </div>
-             <div className="text-left">
-                <span className="block font-bold text-2xl leading-none">BẮT ĐẦU LÀM BÀI</span>
-                <span className="text-sm opacity-90 font-light">Đề ngẫu nhiên 30 câu</span>
-             </div>
-          </div>
-        </button>
-      </div>
-      
-      <div className="mt-8 flex justify-center gap-6 text-gray-400 text-sm">
-         <div className="flex items-center gap-1"><RefreshCw size={14}/> Xáo trộn</div>
-         <div className="flex items-center gap-1"><Lightbulb size={14}/> Gợi ý</div>
-         <div className="flex items-center gap-1"><Award size={14}/> Điểm thưởng</div>
-      </div>
-    </div>
-  </div>
-);
-
-const QuizRunView = ({ questions, finishQuiz }) => {
-  const [currentQIdx, setCurrentQIdx] = useState(0);
-  const [userAnswers, setUserAnswers] = useState({});
-  const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-
-  useEffect(() => {
-    setShowHint(false);
-  }, [currentQIdx]);
-
-  const handleSelect = (option) => {
-    setUserAnswers(prev => ({
-      ...prev,
-      [questions[currentQIdx].id]: option
-    }));
-  };
-
-  const progress = ((Object.keys(userAnswers).length) / questions.length) * 100;
-
-  const handleSubmit = () => {
-    finishQuiz(userAnswers, questions);
-  };
-
-  const currentQ = questions[currentQIdx];
-
-  return (
-    <div className="container mx-auto py-8 px-4 max-w-3xl">
-      <div className="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex justify-between text-sm text-gray-600 mb-2 font-bold">
-          <span className="text-teal-700">Câu {currentQIdx + 1}/{questions.length}</span>
-          <span>Đã làm: {Object.keys(userAnswers).length}</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-          <div className="bg-teal-500 h-3 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-white min-h-[450px] flex flex-col relative transition-all">
-        <div className="mb-6">
-          <div className="flex justify-between items-start mb-4">
-             <span className="inline-block px-3 py-1 bg-teal-50 text-teal-700 text-xs rounded-lg font-bold uppercase tracking-wider border border-teal-100">
-                Chương {currentQ.chapter}
-            </span>
-            
-            <button 
-                onClick={() => setShowHint(!showHint)}
-                className={`flex items-center gap-1 font-medium text-sm px-3 py-1 rounded-full transition-colors ${showHint ? 'bg-amber-100 text-amber-700' : 'text-gray-400 hover:text-amber-500 hover:bg-gray-50'}`}
-            >
-                <Lightbulb size={18} className={showHint ? "fill-amber-500 text-amber-500" : ""} />
-                {showHint ? "Đang hiện gợi ý" : "Gợi ý"}
-            </button>
-          </div>
-          
-          {showHint && (
-            <div className="mb-5 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg text-amber-800 text-sm animate-fadeIn">
-                <strong className="block mb-1 text-amber-600 uppercase text-xs tracking-wider">Gợi ý cho bạn:</strong>
-                {currentQ.hint}
-            </div>
-          )}
-
-          <h3 className="text-xl md:text-2xl font-bold text-gray-800 leading-snug">
-            {currentQ.question}
-          </h3>
-        </div>
-
-        <div className="space-y-3 flex-grow">
-          {currentQ.options.map((opt, idx) => {
-            const isSelected = userAnswers[currentQ.id] === opt;
-            return (
-              <button
-                key={idx}
-                onClick={() => handleSelect(opt)}
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group ${
-                  isSelected 
-                  ? 'border-teal-500 bg-teal-50 text-teal-900 font-medium shadow-md' 
-                  : 'border-gray-100 hover:border-teal-200 hover:bg-gray-50 text-gray-700'
-                }`}
-              >
-                <span className="flex-grow">{opt}</span>
-                {isSelected ? <div className="bg-teal-500 text-white rounded-full p-1"><CheckCircle size={16} /></div> : <div className="w-6 h-6 rounded-full border-2 border-gray-200 group-hover:border-teal-300"></div>}
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="mt-8 flex justify-between items-center pt-6 border-t border-gray-50">
-          <button 
-            disabled={currentQIdx === 0}
-            onClick={() => setCurrentQIdx(prev => prev - 1)}
-            className={`px-5 py-2 rounded-xl font-bold transition-colors ${currentQIdx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100'}`}
-          >
-            Quay lại
-          </button>
-
-          {currentQIdx < questions.length - 1 ? (
-            <button 
-              onClick={() => setCurrentQIdx(prev => prev + 1)}
-              className="px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 font-bold flex items-center shadow-lg hover:shadow-teal-200"
-            >
-              Câu tiếp <ChevronRight size={20} className="ml-1" />
-            </button>
-          ) : (
-            <button 
-              onClick={() => setShowConfirmSubmit(true)}
-              className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg hover:shadow-blue-200 flex items-center gap-2"
-            >
-              <CheckCircle size={20} /> Nộp bài
-            </button>
-          )}
-        </div>
-      </div>
-
-      {showConfirmSubmit && (
-        <div className="fixed inset-0 bg-teal-900/40 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-100">
-            <h3 className="text-2xl font-bold mb-3 text-gray-800 text-center">Nộp bài ngay?</h3>
-            <p className="text-gray-500 mb-8 text-center">
-              Bạn đã hoàn thành <span className="font-bold text-teal-600 text-lg">{Object.keys(userAnswers).length}</span>/<span className="font-bold text-lg">{questions.length}</span> câu.
-            </p>
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={handleSubmit}
-                className="w-full py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 font-bold text-lg shadow-lg"
-              >
-                Nộp bài
-              </button>
-              <button 
-                onClick={() => setShowConfirmSubmit(false)}
-                className="w-full py-3 text-gray-500 hover:bg-gray-100 rounded-xl font-bold"
-              >
-                Xem lại
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const QuizResultView = ({ result, setView, restartQuiz }) => {
-  const { score, total, userAnswers, questions } = result;
-  const percentage = Math.round((score / total) * 100);
-  const [showReward, setShowReward] = useState(false);
-
-  useEffect(() => {
-    if (score > 25) {
-      setTimeout(() => setShowReward(true), 500);
-    }
-  }, [score]);
-
-  return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl relative">
-      {/* POPUP KHEN THƯỞNG */}
-      {showReward && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] px-4 backdrop-blur-md animate-fadeIn">
-           <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center relative overflow-hidden animate-bounceIn border-4 border-pink-200">
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 to-red-500"></div>
-              <div className="flex justify-center mb-6 mt-2">
-                 <div className="bg-pink-50 p-6 rounded-full shadow-inner">
-                    <Heart size={64} className="text-pink-500 fill-pink-500 animate-pulse" />
-                 </div>
-              </div>
-              <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Tuyệt vời!</h2>
-              <p className="text-2xl text-pink-600 font-bold mb-6">Em giỏi lắm, yêu em ❤️</p>
-              <p className="text-gray-500 mb-8 font-medium">Bạn đạt {score}/{total} điểm. Quá xuất sắc!</p>
-              
-              <button 
-                onClick={() => setShowReward(false)}
-                className="w-full py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all"
-              >
-                Nhận lời khen 🥰
-              </button>
-           </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8 border border-gray-100">
-        <div className={`p-10 text-center text-white relative ${score > 25 ? 'bg-gradient-to-br from-pink-500 to-rose-500' : 'bg-gradient-to-br from-teal-600 to-emerald-600'}`}>
-          <div className="absolute top-4 right-4 opacity-20"><Award size={120}/></div>
-          <h2 className="text-2xl font-bold mb-2 opacity-90">Kết Quả Bài Làm</h2>
-          <div className="text-8xl font-black my-4 tracking-tighter drop-shadow-lg">{score}<span className="text-4xl opacity-60 font-medium">/{total}</span></div>
-          <p className="text-white/90 text-lg font-medium bg-white/20 inline-block px-4 py-1 rounded-full">{percentage}% điểm số</p>
-        </div>
-        
-        <div className="p-6 flex flex-col sm:flex-row justify-center gap-4 bg-gray-50 border-t border-gray-100">
-            <button 
-                onClick={restartQuiz} 
-                className="flex items-center justify-center gap-2 px-8 py-3 bg-white border-2 border-teal-600 text-teal-700 rounded-xl hover:bg-teal-50 font-bold shadow-sm hover:shadow-md transition-all"
-            >
-                <RefreshCw size={20} /> Làm đề mới (Xáo trộn)
-            </button>
-            <button 
-                onClick={() => setView('home')} 
-                className="flex items-center justify-center gap-2 px-8 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 font-bold shadow-sm hover:shadow-md transition-all"
-            >
-                <Home size={20} /> Về trang chủ
-            </button>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {questions.map((q, idx) => {
-          const uAns = userAnswers[q.id];
-          const isCorrect = uAns === q.answer;
-
-          return (
-            <div key={q.id} className={`p-6 rounded-2xl border-l-4 shadow-sm bg-white ${isCorrect ? 'border-teal-500' : 'border-red-500'}`}>
-              <div className="flex gap-4">
-                <span className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-base ${isCorrect ? 'bg-teal-100 text-teal-700' : 'bg-red-100 text-red-700'}`}>
-                  {idx + 1}
-                </span>
-                <div className="flex-grow">
-                  <p className="font-bold text-gray-800 text-lg mb-4 leading-relaxed">{q.question}</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {q.options.map((opt, oIdx) => {
-                      let optionClass = "p-3 rounded-lg border text-sm transition-all flex justify-between items-center ";
-                      if (opt === q.answer) {
-                        optionClass += "bg-teal-50 border-teal-500 text-teal-900 font-bold ring-1 ring-teal-500"; 
-                      } else if (opt === uAns && !isCorrect) {
-                        optionClass += "bg-red-50 border-red-400 text-red-900 font-medium";
-                      } else {
-                        optionClass += "bg-white border-gray-200 text-gray-400";
-                      }
-
-                      return (
-                        <div key={oIdx} className={optionClass}>
-                            <span>{opt}</span>
-                            {opt === q.answer && <CheckCircle size={18} className="text-teal-600 flex-shrink-0 ml-2" />}
-                            {opt === uAns && !isCorrect && <AlertTriangle size={18} className="text-red-500 flex-shrink-0 ml-2" />}
-                        </div>
-                      )
-                    })}
-                  </div>
-                  
-                  {!isCorrect && (
-                    <div className="mt-4 text-sm bg-red-50 border border-red-100 p-4 rounded-xl text-gray-700">
-                      <div className="flex items-center gap-2 mb-1">
-                        <AlertTriangle size={16} className="text-red-500"/>
-                        <span className="text-red-600 font-bold">Đáp án đúng:</span>
-                      </div>
-                      <div className="text-teal-700 font-bold text-base mb-2">{q.answer}</div>
-                      <div className="text-gray-500 italic text-xs bg-white p-2 rounded border border-red-100">Giải thích: {q.hint}</div>
-                    </div>
-                  )}
+        const Header = ({ setView }) => (
+            <header className="bg-gradient-to-r from-teal-700 to-emerald-600 text-white p-4 shadow-lg sticky top-0 z-50">
+                <div className="container mx-auto flex justify-between items-center">
+                    <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 cursor-pointer select-none" onClick={() => setView('home')}>
+                        <BookOpen size={28} />
+                        <span>Ôn tập MTĐC</span>
+                    </h1>
+                    <nav className="flex gap-4">
+                        <button onClick={() => setView('home')} className="hover:bg-white/20 px-3 py-1 rounded-full transition-all text-sm font-semibold">Trang chủ</button>
+                    </nav>
                 </div>
-              </div>
+            </header>
+        );
+
+        const HomeView = ({ startQuiz }) => (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center animate-fadeIn">
+                <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-lg w-full border border-teal-50 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-teal-400 to-emerald-500"></div>
+                    
+                    <h2 className="text-3xl font-extrabold text-teal-800 mb-4">Trắc Nghiệm Môi Trường</h2>
+                    <p className="text-gray-600 mb-10 text-lg">
+                        Hệ thống ôn tập kiến thức từ Chương 1 đến Chương 6. <br/>
+                        Sẵn sàng thử thách bản thân chưa?
+                    </p>
+                    
+                    <div className="flex justify-center">
+                        <button 
+                        onClick={() => startQuiz(30)}
+                        className="group relative w-full py-5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 ring-4 ring-transparent hover:ring-teal-200"
+                        >
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
+                                <Play size={32} fill="currentColor" />
+                            </div>
+                            <div className="text-left">
+                                <span className="block font-bold text-2xl leading-none">BẮT ĐẦU LÀM BÀI</span>
+                                <span className="text-sm opacity-90 font-light">Đề ngẫu nhiên 30 câu</span>
+                            </div>
+                        </div>
+                        </button>
+                    </div>
+                    
+                    <div className="mt-8 flex justify-center gap-6 text-gray-400 text-sm">
+                        <div className="flex items-center gap-1"><RefreshCw size={14}/> Xáo trộn</div>
+                        <div className="flex items-center gap-1"><Lightbulb size={14}/> Gợi ý</div>
+                        <div className="flex items-center gap-1"><Award size={14}/> Điểm thưởng</div>
+                    </div>
+                </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+        );
 
-// --- MAIN APP COMPONENT ---
+        const QuizRunView = ({ questions, finishQuiz }) => {
+            const [currentQIdx, setCurrentQIdx] = useState(0);
+            const [userAnswers, setUserAnswers] = useState({});
+            const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+            const [showHint, setShowHint] = useState(false);
 
-export default function App() {
-  const [view, setView] = useState('home'); 
-  const [quizQuestions, setQuizQuestions] = useState([]);
-  const [quizResult, setQuizResult] = useState(null);
+            useEffect(() => {
+                setShowHint(false);
+            }, [currentQIdx]);
 
-  const startQuiz = (limit = 30) => {
-    // Xáo trộn và lấy 30 câu
-    const shuffled = shuffleArray([...fullQuestionBank]);
-    const selected = shuffled.slice(0, limit);
-    setQuizQuestions(selected);
-    setView('quiz_run');
-  };
+            const handleSelect = (option) => {
+                setUserAnswers(prev => ({
+                    ...prev,
+                    [questions[currentQIdx].id]: option
+                }));
+            };
 
-  const finishQuiz = (userAnswers, questions) => {
-    let score = 0;
-    questions.forEach(q => {
-      if (userAnswers[q.id] === q.answer) {
-        score++;
-      }
-    });
+            const progress = ((Object.keys(userAnswers).length) / questions.length) * 100;
 
-    setQuizResult({
-      score,
-      total: questions.length,
-      userAnswers,
-      questions
-    });
-    setView('quiz_result');
-  };
+            const handleSubmit = () => {
+                finishQuiz(userAnswers, questions);
+            };
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-gray-800">
-      <Header setView={setView} />
-      
-      <main className="flex-grow">
-        {view === 'home' && <HomeView startQuiz={startQuiz} />}
-        {view === 'quiz_run' && <QuizRunView questions={quizQuestions} finishQuiz={finishQuiz} />}
-        {view === 'quiz_result' && <QuizResultView result={quizResult} setView={setView} restartQuiz={() => startQuiz(30)} />}
-      </main>
-      
-      <footer className="bg-white text-gray-400 py-6 text-center text-xs border-t">
-        © 2024 Ứng dụng ôn tập MTĐC.
-      </footer>
-    </div>
-  );
-}
+            const currentQ = questions[currentQIdx];
+
+            return (
+                <div className="container mx-auto py-8 px-4 max-w-3xl animate-fadeIn">
+                    <div className="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex justify-between text-sm text-gray-600 mb-2 font-bold">
+                            <span className="text-teal-700">Câu {currentQIdx + 1}/{questions.length}</span>
+                            <span>Đã làm: {Object.keys(userAnswers).length}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                            <div className="bg-teal-500 h-3 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-white min-h-[450px] flex flex-col relative transition-all">
+                        <div className="mb-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <span className="inline-block px-3 py-1 bg-teal-50 text-teal-700 text-xs rounded-lg font-bold uppercase tracking-wider border border-teal-100">
+                                    Chương {currentQ.chapter}
+                                </span>
+                                
+                                <button 
+                                    onClick={() => setShowHint(!showHint)}
+                                    className={`flex items-center gap-1 font-medium text-sm px-3 py-1 rounded-full transition-colors ${showHint ? 'bg-amber-100 text-amber-700' : 'text-gray-400 hover:text-amber-500 hover:bg-gray-50'}`}
+                                >
+                                    <Lightbulb size={18} className={showHint ? "fill-amber-500 text-amber-500" : ""} />
+                                    {showHint ? "Đang hiện gợi ý" : "Gợi ý"}
+                                </button>
+                            </div>
+                            
+                            {showHint && (
+                                <div className="mb-5 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg text-amber-800 text-sm animate-fadeIn">
+                                    <strong className="block mb-1 text-amber-600 uppercase text-xs tracking-wider">Gợi ý cho bạn:</strong>
+                                    {currentQ.hint}
+                                </div>
+                            )}
+
+                            <h3 className="text-xl md:text-2xl font-bold text-gray-800 leading-snug">
+                                {currentQ.question}
+                            </h3>
+                        </div>
+
+                        <div className="space-y-3 flex-grow">
+                            {currentQ.options.map((opt, idx) => {
+                                const isSelected = userAnswers[currentQ.id] === opt;
+                                return (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSelect(opt)}
+                                        className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group ${
+                                        isSelected 
+                                        ? 'border-teal-500 bg-teal-50 text-teal-900 font-medium shadow-md' 
+                                        : 'border-gray-100 hover:border-teal-200 hover:bg-gray-50 text-gray-700'
+                                        }`}
+                                    >
+                                        <span className="flex-grow">{opt}</span>
+                                        {isSelected ? <div className="bg-teal-500 text-white rounded-full p-1"><CheckCircle size={16} /></div> : <div className="w-6 h-6 rounded-full border-2 border-gray-200 group-hover:border-teal-300"></div>}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        <div className="mt-8 flex justify-between items-center pt-6 border-t border-gray-50">
+                            <button 
+                                disabled={currentQIdx === 0}
+                                onClick={() => setCurrentQIdx(prev => prev - 1)}
+                                className={`px-5 py-2 rounded-xl font-bold transition-colors ${currentQIdx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100'}`}
+                            >
+                                Quay lại
+                            </button>
+
+                            {currentQIdx < questions.length - 1 ? (
+                                <button 
+                                    onClick={() => setCurrentQIdx(prev => prev + 1)}
+                                    className="px-6 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 font-bold flex items-center shadow-lg hover:shadow-teal-200"
+                                >
+                                    Câu tiếp <ChevronRight size={20} className="ml-1" />
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => setShowConfirmSubmit(true)}
+                                    className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg hover:shadow-blue-200 flex items-center gap-2"
+                                >
+                                    <CheckCircle size={20} /> Nộp bài
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {showConfirmSubmit && (
+                        <div className="fixed inset-0 bg-teal-900/40 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn">
+                            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-100">
+                                <h3 className="text-2xl font-bold mb-3 text-gray-800 text-center">Nộp bài ngay?</h3>
+                                <p className="text-gray-500 mb-8 text-center">
+                                    Bạn đã hoàn thành <span className="font-bold text-teal-600 text-lg">{Object.keys(userAnswers).length}</span>/<span className="font-bold text-lg">{questions.length}</span> câu.
+                                </p>
+                                <div className="flex flex-col gap-3">
+                                    <button 
+                                        onClick={handleSubmit}
+                                        className="w-full py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 font-bold text-lg shadow-lg"
+                                    >
+                                        Nộp bài
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowConfirmSubmit(false)}
+                                        className="w-full py-3 text-gray-500 hover:bg-gray-100 rounded-xl font-bold"
+                                    >
+                                        Xem lại
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const QuizResultView = ({ result, setView, restartQuiz }) => {
+            const { score, total, userAnswers, questions } = result;
+            const percentage = Math.round((score / total) * 100);
+            const [showReward, setShowReward] = useState(false);
+
+            useEffect(() => {
+                if (score > 25) {
+                    setTimeout(() => setShowReward(true), 500);
+                }
+            }, [score]);
+
+            return (
+                <div className="container mx-auto py-8 px-4 max-w-4xl relative animate-fadeIn">
+                    {/* POPUP KHEN THƯỞNG */}
+                    {showReward && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] px-4 backdrop-blur-md animate-fadeIn">
+                        <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center relative overflow-hidden animate-bounceIn border-4 border-pink-200">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 to-red-500"></div>
+                            <div className="flex justify-center mb-6 mt-2">
+                                <div className="bg-pink-50 p-6 rounded-full shadow-inner">
+                                    <Heart size={64} className="text-pink-500 fill-pink-500 animate-pulse" />
+                                </div>
+                            </div>
+                            <h2 className="text-3xl font-extrabold text-gray-800 mb-2">Tuyệt vời!</h2>
+                            <p className="text-2xl text-pink-600 font-bold mb-6">Em giỏi lắm, yêu em ❤️</p>
+                            <p className="text-gray-500 mb-8 font-medium">Bạn đạt {score}/{total} điểm. Quá xuất sắc!</p>
+                            
+                            <button 
+                                onClick={() => setShowReward(false)}
+                                className="w-full py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all"
+                            >
+                                Nhận lời khen 🥰
+                            </button>
+                        </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8 border border-gray-100">
+                        <div className={`p-10 text-center text-white relative ${score > 25 ? 'bg-gradient-to-br from-pink-500 to-rose-500' : 'bg-gradient-to-br from-teal-600 to-emerald-600'}`}>
+                            <div className="absolute top-4 right-4 opacity-20"><Award size={120}/></div>
+                            <h2 className="text-2xl font-bold mb-2 opacity-90">Kết Quả Bài Làm</h2>
+                            <div className="text-8xl font-black my-4 tracking-tighter drop-shadow-lg">{score}<span className="text-4xl opacity-60 font-medium">/{total}</span></div>
+                            <p className="text-white/90 text-lg font-medium bg-white/20 inline-block px-4 py-1 rounded-full">{percentage}% điểm số</p>
+                        </div>
+                        
+                        <div className="p-6 flex flex-col sm:flex-row justify-center gap-4 bg-gray-50 border-t border-gray-100">
+                            <button 
+                                onClick={restartQuiz} 
+                                className="flex items-center justify-center gap-2 px-8 py-3 bg-white border-2 border-teal-600 text-teal-700 rounded-xl hover:bg-teal-50 font-bold shadow-sm hover:shadow-md transition-all"
+                            >
+                                <RefreshCw size={20} /> Làm đề mới (Xáo trộn)
+                            </button>
+                            <button 
+                                onClick={() => setView('home')} 
+                                className="flex items-center justify-center gap-2 px-8 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 font-bold shadow-sm hover:shadow-md transition-all"
+                            >
+                                <Home size={20} /> Về trang chủ
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        {questions.map((q, idx) => {
+                        const uAns = userAnswers[q.id];
+                        const isCorrect = uAns === q.answer;
+
+                        return (
+                            <div key={q.id} className={`p-6 rounded-2xl border-l-4 shadow-sm bg-white ${isCorrect ? 'border-teal-500' : 'border-red-500'}`}>
+                            <div className="flex gap-4">
+                                <span className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-base ${isCorrect ? 'bg-teal-100 text-teal-700' : 'bg-red-100 text-red-700'}`}>
+                                {idx + 1}
+                                </span>
+                                <div className="flex-grow">
+                                <p className="font-bold text-gray-800 text-lg mb-4 leading-relaxed">{q.question}</p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {q.options.map((opt, oIdx) => {
+                                    let optionClass = "p-3 rounded-lg border text-sm transition-all flex justify-between items-center ";
+                                    if (opt === q.answer) {
+                                        optionClass += "bg-teal-50 border-teal-500 text-teal-900 font-bold ring-1 ring-teal-500"; 
+                                    } else if (opt === uAns && !isCorrect) {
+                                        optionClass += "bg-red-50 border-red-400 text-red-900 font-medium";
+                                    } else {
+                                        optionClass += "bg-white border-gray-200 text-gray-400";
+                                    }
+
+                                    return (
+                                        <div key={oIdx} className={optionClass}>
+                                            <span>{opt}</span>
+                                            {opt === q.answer && <CheckCircle size={18} className="text-teal-600 flex-shrink-0 ml-2" />}
+                                            {opt === uAns && !isCorrect && <AlertTriangle size={18} className="text-red-500 flex-shrink-0 ml-2" />}
+                                        </div>
+                                    )
+                                    })}
+                                </div>
+                                
+                                {!isCorrect && (
+                                    <div className="mt-4 text-sm bg-red-50 border border-red-100 p-4 rounded-xl text-gray-700">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <AlertTriangle size={16} className="text-red-500"/>
+                                        <span className="text-red-600 font-bold">Đáp án đúng:</span>
+                                    </div>
+                                    <div className="text-teal-700 font-bold text-base mb-2">{q.answer}</div>
+                                    <div className="text-gray-500 italic text-xs bg-white p-2 rounded border border-red-100">Giải thích: {q.hint}</div>
+                                    </div>
+                                )}
+                                </div>
+                            </div>
+                            </div>
+                        );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('home'); 
+            const [quizQuestions, setQuizQuestions] = useState([]);
+            const [quizResult, setQuizResult] = useState(null);
+
+            const startQuiz = (limit = 30) => {
+                const shuffled = shuffleArray([...fullQuestionBank]);
+                const selected = shuffled.slice(0, limit);
+                setQuizQuestions(selected);
+                setView('quiz_run');
+            };
+
+            const finishQuiz = (userAnswers, questions) => {
+                let score = 0;
+                questions.forEach(q => {
+                    if (userAnswers[q.id] === q.answer) {
+                        score++;
+                    }
+                });
+
+                setQuizResult({
+                    score,
+                    total: questions.length,
+                    userAnswers,
+                    questions
+                });
+                setView('quiz_result');
+            };
+
+            return (
+                <>
+                    <Header setView={setView} />
+                    <main className="flex-grow">
+                        {view === 'home' && <HomeView startQuiz={startQuiz} />}
+                        {view === 'quiz_run' && <QuizRunView questions={quizQuestions} finishQuiz={finishQuiz} />}
+                        {view === 'quiz_result' && <QuizResultView result={quizResult} setView={setView} restartQuiz={() => startQuiz(30)} />}
+                    </main>
+                    <footer className="bg-white text-gray-400 py-6 text-center text-xs border-t">
+                        © 2024 Ứng dụng ôn tập MTĐC.
+                    </footer>
+                </>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
